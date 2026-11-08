@@ -11,7 +11,6 @@
 (function () {
     "use strict";
 
-    // Never run twice on the same page (e.g. script installed/injected twice).
     if (window.__grepolisGodTools) return;
     window.__grepolisGodTools = true;
 
@@ -43,7 +42,6 @@
         const style = el("style");
         style.id = "god-tools-styles";
         style.textContent = `
-/* ===== God Counter ===== */
 .god-city-counter{clear:both;margin:8px 18px 12px;padding:0 0 9px;color:#4b2f12;font:11px Arial,Helvetica,sans-serif;border-bottom:1px solid rgba(90,59,18,.38)}
 .god-city-counter .counter-title{margin:0 0 9px;padding:0 2px 5px;color:#5a3b12;font:bold 16px/20px Georgia,"Times New Roman",serif;text-shadow:0 1px rgba(255,244,198,.8);border-bottom:1px solid rgba(90,59,18,.35)}
 .god-city-counter .counter-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:5px 12px;padding:0 2px}
@@ -63,7 +61,6 @@
 .god-city-counter .gc-show-all:hover{background:linear-gradient(#fff9dc,#e6c985);color:#0F213A}
 .god-city-counter .gc-show-all.disabled{opacity:.55;cursor:default;pointer-events:none}
 
-/* ===== God Switcher ===== */
 #gsw-btn.btn_wrapper{position:absolute!important;z-index:20;width:var(--gsw-size,26px);height:var(--gsw-size,26px);margin:0!important;user-select:none}
 #gsw-btn .gsw_toggle{position:relative;width:var(--gsw-size,26px);height:var(--gsw-size,26px);cursor:pointer;background-repeat:no-repeat!important}
 #gsw-btn .gsw-bolt{position:absolute;inset:0;width:var(--gsw-size,26px);height:var(--gsw-size,26px);background:none!important}
@@ -75,14 +72,12 @@
 .gsw-row:hover{border-color:rgba(102,68,29,.45);background:rgba(255,240,184,.3)}
 .gsw-row.active{border-color:#657f35;background:rgba(181,205,116,.48);box-shadow:inset 0 0 3px rgba(63,91,31,.3)}
 .gsw-name{flex:1;min-width:0;text-align:left;font:bold 13px Georgia,"Times New Roman",serif;color:#3c250f;text-shadow:0 1px rgba(255,244,198,.8)}
-/* Game's own icon markup, scaled down and cropped to the round part (no bar underneath) */
 .gsw-iconbox{position:relative;flex:none;overflow:hidden}
 .gsw-iconbox .god_overview_god_favor{position:absolute!important;left:0!important;top:0!important;float:none!important;margin:0!important;transform-origin:top left}
 .gsw-iconbox a.favor{display:block!important;position:relative!important;text-decoration:none}
 .gsw-iconbox .gods_overview_icon{position:relative!important;left:auto!important;top:auto!important;margin:0!important;float:none!important}
 .gsw-iconbox.loading{opacity:.55}
 .gsw-banner{display:block;width:100%;max-width:286px;height:auto;margin:0 auto 4px;pointer-events:none;user-select:none}
-/* God not worshipped in any city */
 .gsw-row.unused .gsw-iconbox,.gsw-row.unused .gsw-portrait,.gsw-row.unused .gsw-favor-wrap{filter:grayscale(1);opacity:.5}
 .gsw-row.unused .gsw-name{color:#8a7e68;text-shadow:none}
 .gsw-portrait{position:relative;width:40px;height:40px;min-width:40px;border-radius:50%;overflow:hidden;box-sizing:border-box;border:2px solid #8a672c;background:#1c1a16;box-shadow:inset 0 2px 5px rgba(0,0,0,.65),0 1px 2px rgba(0,0,0,.45);transition:box-shadow .12s}
@@ -96,7 +91,6 @@
 .gsw-favor-wrap .btn_gods_spells{position:absolute!important;left:21px!important;top:calc(50% - 2px)!important;right:auto!important;bottom:auto!important;margin:0!important;transform:translate(-50%,-50%);pointer-events:none;z-index:2}
 .gsw-favor-wrap.plain .btn_gods_spells{display:none}
 .gsw-favor-wrap .gods_favor_amount{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;margin:0!important;float:none!important}
-/* Fallback if the native favor styling is not available in this context */
 .gsw-favor-wrap.plain .gods_favor_amount{all:unset;display:block}
 .gsw-favor-wrap.plain .favor_amount{all:unset;display:inline-block;min-width:64px;padding:1px 8px;box-sizing:border-box;text-align:center;font:bold 12px/16px Arial,Helvetica,sans-serif;color:#aee0ff;text-shadow:1px 1px #2a1606;border:1px solid #60401e;background:linear-gradient(#805b31,#533416);box-shadow:inset 0 1px rgba(255,255,255,.22)}
 `;
@@ -136,7 +130,6 @@
 
         const nativeIcons = $$(".god_icons_container .gods_overview_icon[data-god_id]", wrapper);
 
-        /* ---- build panel ---- */
         const panel = el("div", "god-city-counter");
         panel.appendChild(el("div", "counter-title", "God Counter"));
 
@@ -183,7 +176,6 @@
         panel.append(list, footer);
         townList.insertAdjacentElement("beforebegin", panel);
 
-        /* ---- filtering ---- */
         let active = "all";
 
         function apply(godId) {
@@ -213,7 +205,6 @@
 
         const toggle = godId => apply(active === godId ? "all" : godId);
 
-        // One delegated listener for all counter items
         list.addEventListener("click", e => {
             const item = e.target.closest(".counter-item");
             if (!item) return;
@@ -329,7 +320,6 @@
         return portrait;
     }
 
-    // One row: the game's own god icon (cropped to the ring), name and the favor box.
     function makeRow(godId) {
         const row = el("div", "gsw-row");
         row.dataset.god = godId;
@@ -533,7 +523,6 @@
             });
         }
 
-        // If the game's favor styling doesn't apply here, fall back to a plain chip.
         const probe = $(".gods_favor_amount", grid);
         if (probe) {
             const cs = getComputedStyle(probe);
@@ -554,7 +543,6 @@
         favorTimer = setInterval(() => (isMenuOpen() ? (refreshActive(), savePos()) : closeMenu()), 2000);
     }
 
-    // Native Grepolis button markup (same as IslandTag Creator uses).
     function createGPButton(text, id) {
         const btn = el("div", "button_new");
         btn.id = id;
@@ -564,7 +552,6 @@
         return btn;
     }
 
-    // Opens the Overviews window on the Gods tab, where the God Counter lives.
     function openGodsOverview() {
         const f = window.TownOverviewWindowFactory;
         for (const name of ["openGodsOverview", "openGodOverview"]) {
@@ -575,7 +562,6 @@
         console.warn("God Tools: could not find the Gods overview opener.");
     }
 
-    // Remember where the switcher window was left (restored on the next open).
     const POS_KEY = "godTools.switcherPos2";
     let posReady = false; // true once the saved position was applied, so the default spot is never saved over it
 
@@ -678,7 +664,6 @@
         gswWin = null;
     }
 
-    // One delegated handler for portrait clicks inside the window.
     function onPortraitClick(e) {
         const row = e.target.closest && e.target.closest("#gswRoot .gsw-row");
         if (!row) return;
@@ -687,7 +672,6 @@
         if (getCurrentGod() === godId) return;
         portrait.classList.add("loading");
         if (changeGod(godId)) {
-            // Poll until the game reports the new god, then refresh highlight and favor.
             let tries = 0;
             const poll = setInterval(() => {
                 refreshActive();
@@ -774,7 +758,6 @@
     function check() {
         rafPending = false;
 
-        // Switcher: (re)attach button if the buttons area exists without it.
         const area = $(".gods_area_buttons");
         if (area && (!btnEl || !area.contains(btnEl))) attachSwitcher();
         if (area) watchCurrentGod(); // re-attach if the game replaced the god element
@@ -799,7 +782,6 @@
     function init() {
         addStyles();
         document.addEventListener("click", onPortraitClick);
-        // Save the window position after every click/drag release while the switcher is open.
         document.addEventListener("mouseup", () => { if (isMenuOpen()) savePos(); }, true);
 
         document.addEventListener("keydown", e => {
