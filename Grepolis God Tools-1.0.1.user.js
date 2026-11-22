@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Grepolis God Tools
 // @version      1.0.8
-// @description  God Counter and God Switcher (requires the active Administrator advisor)
+// @description  God Counter and God Switcher 
 // @author       The Invincble & Krideri
 // @match        *://*.grepolis.com/game/*
 // @grant        none
