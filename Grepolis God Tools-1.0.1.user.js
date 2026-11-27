@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Grepolis God Tools
-// @version      1.0.8
-// @description  God Counter and God Switcher 
+// @version      1.0.9
+// @description  God Counter and God Switcher
 // @author       The Invincble & Krideri
 // @match        *://*.grepolis.com/game/*
 // @grant        none
@@ -24,6 +24,11 @@
     };
     const COUNTER_ORDER = ["zeus", "poseidon", "hera", "athena", "hades", "artemis", "aphrodite", "ares", "none"];
     const SWITCHER_ORDER = ["zeus", "poseidon", "hera", "athena", "hades", "artemis", "aphrodite", "ares"];
+
+    // God ids come from the page (data attributes / class names): accept only plain lowercase words, and never
+    // look them up on Object.prototype ("constructor", "__proto__" ...).
+    const safeGodId = v => (/^[a-z]{1,20}$/.test(v) ? v : "none");
+    const godName = id => (Object.prototype.hasOwnProperty.call(GOD_NAMES, id) ? GOD_NAMES[id] : id);
 
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -450,6 +455,16 @@
      * window and never reads town data from the game models.
      * ------------------------------------------------------------------ */
     const counterDone = new WeakSet();
+    // wrapper -> function that removes the counter again (panel, filter, styles, listeners)
+    const counterTeardowns = new Map();
+
+    // Called when the Administrator advisor is no longer active: removes every counter panel and returns the
+    // overview to its normal state (all towns visible, no filter, no listeners of ours left).
+    function teardownCounters() {
+        counterTeardowns.forEach(teardown => teardown());
+        counterTeardowns.clear();
+        $$(".god-city-counter").forEach(panel => panel.remove()); // safety net for any stray panel
+    }
 
     function initCounter(wrapper) {
         if (counterDone.has(wrapper)) return;
@@ -464,13 +479,14 @@
         // Read each town's god once from the rows the overview already rendered.
         const towns = $$(".town_item[data-god_id]", townList).map(node => ({
             node,
-            god: (node.dataset.god_id || "").trim().toLowerCase() || "none"
+            god: safeGodId((node.dataset.god_id || "").trim().toLowerCase())
         }));
         if (!towns.length) return;
 
         counterDone.add(wrapper);
 
-        const counts = Object.fromEntries(COUNTER_ORDER.map(id => [id, 0]));
+        const counts = Object.create(null);
+        COUNTER_ORDER.forEach(id => { counts[id] = 0; });
         towns.forEach(t => { counts[t.god] = (counts[t.god] || 0) + 1; });
 
         const order = COUNTER_ORDER.concat(
@@ -491,7 +507,7 @@
             item.dataset.godId = godId;
             item.title = godId === "none"
                 ? "Show cities without a god"
-                : `Show cities worshipping ${GOD_NAMES[godId] || godId}`;
+                : `Show cities worshipping ${godName(godId)}`;
 
             const icon = el("div", "counter-icon");
             icon.appendChild(godId === "none"
@@ -500,7 +516,7 @@
 
             item.append(
                 icon,
-                el("span", "counter-name", GOD_NAMES[godId] || godId),
+                el("span", "counter-name", godName(godId)),
                 el("span", "counter-value", String(counts[godId] || 0))
             );
             items.set(godId, item);
@@ -573,6 +589,7 @@
         });
 
         // Make the native god icons act as single-select filters (capture phase)
+        const listeners = new AbortController();
         wrapper.addEventListener("click", e => {
             if (!curatorActive()) return; // leave the native behaviour alone
             const icon = e.target.closest(".god_icons_container .gods_overview_icon[data-god_id]");
@@ -589,9 +606,17 @@
                 e.stopImmediatePropagation();
                 apply("all");
             }
-        }, true);
+        }, { capture: true, signal: listeners.signal });
 
         nativeIcons.forEach(icon => icon.classList.add("selected"));
+
+        counterTeardowns.set(wrapper, () => {
+            listeners.abort();                                           // stop intercepting the native clicks
+            apply("all");                                                // reset filter state and native icon classes
+            towns.forEach(t => t.node.style.removeProperty("display")); // undo every display change on town rows
+            panel.remove();
+            counterDone.delete(wrapper);                                 // allow a clean rebuild if the advisor returns
+        });
     }
 
     /* ------------------------------------------------------------------ *
@@ -844,7 +869,7 @@
             r.title = godTooltip(id, favor, cap);
         });
         const label = $("#gswCurrent", root);
-        if (label) label.textContent = `Active god: ${current ? GOD_NAMES[current] || current : "\u2013"}`;
+        if (label) label.textContent = `Active god: ${current ? godName(safeGodId(current)) : "\u2013"}`;
         updateFavor();
     }
 
@@ -1225,7 +1250,8 @@
         rafPending = false;
 
         if (!curatorActive()) {
-            // Gate is closed: nothing of this script may run.
+            // Gate is closed: nothing of this script may run, and what it already added is taken away again.
+            teardownCounters();
             if (btnEl || $("#gsw-btn")) removeSwitcher();
             return;
         }
